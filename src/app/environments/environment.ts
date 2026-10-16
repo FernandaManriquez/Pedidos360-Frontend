@@ -12,5 +12,5 @@ export const environment = {
     ]
   },
 
-  apiBaseUrl: 'https://0tf2rrk5b0.execute-api.us-east-1.amazonaws.com/dev'
+  apiBaseUrl: 'http://localhost:8080'
 };

@@ -1,0 +1,53 @@
+<section style="padding: 1rem 2rem;">
+  <h2>Crear pedido</h2>
+
+  <form #formulario="ngForm" (ngSubmit)="crear()" >
+    <p>
+      <label>Usuario:
+        <input name="usuario" [(ngModel)]="usuario"
+               required pattern=".*\S.*" maxlength="150">
+      </label>
+    </p>
+
+    <p>
+      <label>Producto:
+        <select name="productoId" [(ngModel)]="productoId" required>
+          <option [ngValue]="null">Selecciona un producto</option>
+          <option *ngFor="let p of productos" [ngValue]="p.id">
+            {{ p.nombre }} — {{ p.precio | currency:'CLP':'symbol-narrow':'1.0-0' }}
+          </option>
+        </select>
+      </label>
+    </p>
+
+    <p>
+      <label>Cantidad:
+        <input type="number" name="cantidad" [(ngModel)]="cantidad"
+               required min="1" step="1" pattern="[0-9]+">
+      </label>
+    </p>
+
+    <p>Total: {{ total | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+    <button type="submit"
+            [disabled]="formulario.invalid || guardando || !productoId">
+      {{ guardando ? 'Guardando...' : 'Crear pedido' }}
+    </button>
+  </form>
+
+  <p role="status">{{ mensaje }}</p>
+  <p role="alert">{{ error }}</p>
+
+  <h2>Pedidos</h2>
+  <p *ngIf="cargando">Cargando pedidos...</p>
+  <table border="1" cellpadding="8" *ngIf="pedidos.length">
+    <tr>
+      <th>ID</th><th>Usuario</th><th>Producto</th>
+      <th>Cantidad</th><th>Total</th><th>Estado</th>
+    </tr>
+    <tr *ngFor="let p of pedidos">
+      <td>{{ p.id }}</td><td>{{ p.usuario }}</td>
+      <td>{{ p.productoId }}</td><td>{{ p.cantidad }}</td>
+      <td>{{ p.total }}</td><td>{{ p.estado }}</td>
+    </tr>
+  </table>
+</section>

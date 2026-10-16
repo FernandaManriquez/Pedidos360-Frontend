@@ -14,6 +14,10 @@ export class ApiService {
     return this.http.get<Pedido[]>(`${this.api}/api/pedidos`);
   }
 
+  crearPedido(pedido: Pedido): Observable<Pedido> {
+    return this.http.post<Pedido>(`${this.api}/api/pedidos`, pedido);
+  }
+
   listarProductos(): Observable<Producto[]> {
     return this.http.get<Producto[]>(`${this.api}/api/productos`);
   }

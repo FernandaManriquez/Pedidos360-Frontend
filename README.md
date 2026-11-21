@@ -1,82 +1,73 @@
-# Pedidos360 Frontend
+# Pedidos360 Frontend — EA3
 
-Frontend de Pedidos360 desarrollado con Angular e integrado con Microsoft Entra ID mediante MSAL.
+Frontend Angular integrado con Microsoft Entra ID mediante MSAL. Rama de entrega: `feature/ea3-kafka`.
 
-## Tecnologías
+## Estado al 21 de noviembre de 2026
 
-- Angular
-- TypeScript
-- MSAL Angular
-- OAuth 2.0 / OpenID Connect
-- Microsoft Entra ID
-- AWS API Gateway
+Se verificó Angular ejecutado localmente en `http://localhost:4200`, con inicio de sesión y consultas autenticadas de productos y pedidos a través de AWS API Gateway. Ambas consultas respondieron HTTP 200.
 
-## Funcionalidades
+El frontend no está publicado en la nube. Se creó el bucket S3 privado `pedidos360-frontend-ea3-257513036260`, pero el intento de configurar CloudFront con acceso privado fue bloqueado por el permiso IAM `cloudfront:CreateOriginAccessControl`. No se obtuvo una distribución funcional ni una URL CloudFront.
 
-- Inicio y cierre de sesión con Microsoft Entra ID.
-- Protección de rutas mediante `MsalGuard`.
-- Envío automático del JWT mediante `MsalInterceptor`.
-- Consulta de productos.
-- Consulta de pedidos.
-- Consumo del backend a través de AWS API Gateway.
+## Configuraciones
 
-## Rutas
+| Perfil | Archivo | URL base del backend |
+|---|---|---|
+| Local | src/app/environments/environment.ts | http://localhost:8080 |
+| AWS | src/app/environments/environment.aws.ts | https://0tf2rrk5b0.execute-api.us-east-1.amazonaws.com/dev |
 
-- `/productos`
-- `/pedidos`
+El perfil AWS cambia el destino de las solicitudes, no el alojamiento del frontend. Conserva la redirección Entra ID `http://localhost:4200` y `production: false`; `angular.json` configura este perfil con optimización deshabilitada y source maps. No se presenta como una compilación de producción publicada.
 
-## Configuración
+El interceptor protege las solicitudes a `${environment.apiBaseUrl}/*` y solicita el scope delegado `Pedidos.ReadWrite`. Los identificadores públicos de las aplicaciones Entra ID no son contraseñas. No incluir tokens, secretos de cliente o claves privadas en el repositorio.
 
-La configuración principal se encuentra en:
+## Instalación y ejecución en Windows PowerShell
 
-```text
-src/app/environments/environment.ts
+Desde la raíz del repositorio:
+
+```powershell
+npm.cmd install
 ```
 
-Incluye:
+Para el backend local:
 
-- Client ID de la aplicación frontend registrada en Entra ID.
-- Tenant ID.
-- Authority de Microsoft Entra ID.
-- Redirect URI.
-- Scope `Pedidos.ReadWrite` expuesto por el backend.
-- URL base de AWS API Gateway.
-
-## Instalación
-
-```bash
-npm install
+```powershell
+npm.cmd start
 ```
 
-## Ejecución local
+Para los servicios accesibles mediante API Gateway:
 
-```bash
-npm start
+```powershell
+npm.cmd start -- --configuration aws
 ```
 
-La aplicación queda disponible en:
+Ejecutar una sola instancia de Angular en el puerto 4200. El perfil AWS no necesita iniciar el BFF ni los microservicios en el computador local, pero requiere la instancia EC2 y el API Gateway operativos.
 
-```text
-http://localhost:4200
+## Compilación verificada
+
+```powershell
+npm.cmd run build -- --configuration aws
 ```
 
-## Compilación
+Esta compilación terminó correctamente. Generó un bundle inicial sin optimizar de aproximadamente 2,27 MB en `dist/pedidos360-frontend`. No equivale a un despliegue en S3 ni a la validación de la configuración production.
 
-```bash
-npm run build
-```
+## Autenticación y rutas
 
-## Flujo de autenticación
-La autenticación utiliza OAuth 2.0 / OpenID Connect mediante el flujo Authorization Code con PKCE, administrado automáticamente por MSAL.
+La autenticación usa OAuth 2.0 / OpenID Connect con Authorization Code y PKCE mediante MSAL. `MsalGuard` protege las rutas; `MsalInterceptor` incorpora el access token a las solicitudes configuradas.
 
-1. Angular inicia el flujo de autenticación mediante MSAL.
-2. Microsoft Entra ID autentica al usuario.
-3. El frontend obtiene un JWT con el scope autorizado.
-4. `MsalInterceptor` adjunta el token en las solicitudes al API Gateway.
-5. API Gateway valida el JWT y reenvía la solicitud al BFF.
-6. El backend procesa la solicitud y devuelve la respuesta al frontend.
+Rutas de consulta: `/productos` y `/pedidos`.
 
-## Evidencias de autenticación e integración
+Flujo validado: Angular local → API Gateway → BFF en EC2 → microservicio → MariaDB en AWS. El gateway rechazó una solicitud sin JWT con HTTP 401 y aceptó la consulta con un token válido con HTTP 200.
+
+El preflight CORS devolvió HTTP 204 para el origen `http://localhost:4200`, autorizando las cabeceras `authorization` y `content-type`.
+
+## Estado del despliegue
+
+S3 permanece privado. La configuración CloudFront no pudo completarse con el rol del laboratorio. Un futuro alojamiento HTTPS requiere ajustar y registrar la URI de redirección SPA en Entra ID, permitir el nuevo origen en CORS y producir una compilación apropiada para publicación. Esas acciones no se declaran realizadas.
+
+## Evidencias históricas
+
+Las imágenes siguientes documentan autenticación e integración de la etapa previa. Las pruebas actuales de EA3 incluyen las respuestas 200 de productos y pedidos vía API Gateway y el error IAM del intento CloudFront.
+
+### Autenticación e integración
 
 A continuación se presentan las evidencias de configuración y funcionamiento del frontend.
 
